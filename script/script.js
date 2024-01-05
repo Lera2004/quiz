@@ -8,91 +8,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const prevButton = document.querySelector('#prev');
     const sendButton = document.querySelector('#send');
 
-    const questions = [
-    {
-        question: "Какого цвета бургер?",
-        answers: [
-            {
-                title: 'Стандарт',
-                url: './image/burger.png'
-            },
-            {
-                title: 'Черный',
-                url: './image/burgerBlack.png'
-            }
-        ],
-        type: 'radio'
-    },
-    {
-        question: "Из какого мяса котлета?",
-        answers: [
-            {
-                title: 'Курица',
-                url: './image/chickenMeat.png'
-            },
-            {
-                title: 'Говядина',
-                url: './image/beefMeat.png'
-            },
-            {
-                title: 'Свинина',
-                url: './image/porkMeat.png'
-            }
-        ],
-        type: 'radio'
-    },
-    {
-        question: "Дополнительные ингредиенты?",
-        answers: [
-            {
-                title: 'Помидор',
-                url: './image/tomato.png'
-            },
-            {
-                title: 'Огурец',
-                url: './image/cucumber.png'
-            },
-            {
-                title: 'Салат',
-                url: './image/salad.png'
-            },
-            {
-                title: 'Лук',
-                url: './image/onion.png'
-            }
-        ],
-        type: 'checkbox'
-    },
-    {
-        question: "Добавить соус?",
-        answers: [
-            {
-                title: 'Чесночный',
-                url: './image/sauce1.png'
-            },
-            {
-                title: 'Томатный',
-                url: './image/sauce2.png'
-            },
-            {
-                title: 'Горчичный',
-                url: './image/sauce3.png'
-            }
-        ],
-        type: 'radio'
+    const getData = () => {
+        formAnswers.textContent = 'LOAD';
+        
+       
+        setTimeout(() => {
+             fetch('./questions.json')
+            .then(res => res.json())
+            .then(obj => playTest(obj.questions))
+                 .catch(err => {
+                     formAnswers.textContent = 'Ошибка загрузки данных!'
+                     console.error(err)
+                 })
+        }, 1000)
     }
-];
 
+    
    btnOpenModal.addEventListener('click', () => {
         modalBlock.classList.add('d-block');
-        playTest();
+        getData();
     })
 
     closeModal.addEventListener('click', () => {
         modalBlock.classList.remove('d-block');
     })
 
-    const playTest = () => {
+    const playTest = (questions) => {
         const finalAnswers = [];
         let numberQuestion = 0;
 
