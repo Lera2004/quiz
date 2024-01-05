@@ -1,166 +1,198 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const btnOpenModal = document.querySelector('#btnOpenModal');
-    const modalBlock = document.querySelector('#modalBlock');
-    const closeModal = document.querySelector('#closeModal');
-    const questionTitle = document.querySelector('#question');
-    const formAnswers = document.querySelector('#formAnswers');
-    const nextButton = document.querySelector('#next');
-    const prevButton = document.querySelector('#prev');
-    const sendButton = document.querySelector('#send');
-    
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  push,
+  child,
+  get,
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyDsL-aJp51FD5jU8eeRe5-RqWkQFGmUgAU",
-    authDomain: "burger-a61bf.firebaseapp.com",
-    databaseURL: "https://burger-a61bf-default-rtdb.firebaseio.com",
-    projectId: "burger-a61bf",
-    storageBucket: "burger-a61bf.appspot.com",
-    messagingSenderId: "452473024892",
-    appId: "1:452473024892:web:08bf4f96130605d09134f9",
-    measurementId: "G-72HJ4PQNMY"
-  };
+  apiKey: "AIzaSyAX_s9yU_yPpdynfPBfGTzIjuYC7zcGTzA",
+  authDomain: "burgerquiz-8646e.firebaseapp.com",
+  databaseURL:
+    "https://burgerquiz-8646e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "burgerquiz-8646e",
+  storageBucket: "burgerquiz-8646e.appspot.com",
+  messagingSenderId: "792495562848",
+  appId: "1:792495562848:web:c07f038dc637e8fa00e305",
+  measurementId: "G-SLM92DDWNZ",
+};
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const dbRef = ref(getDatabase(app));
 
-    
+document.addEventListener("DOMContentLoaded", function () {
+  const btnOpenModal = document.querySelector("#btnOpenModal");
+  const modalBlock = document.querySelector("#modalBlock");
+  const closeModal = document.querySelector("#closeModal");
+  const questionTitle = document.querySelector("#question");
+  const formAnswers = document.querySelector("#formAnswers");
+  const prevButton = document.querySelector("#prev");
+  const nextButton = document.querySelector("#next");
+  const sendButton = document.querySelector("#send");
+
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
 
-    
-    const getData = () => {
-    formAnswers.textContent = 'LOAD';
-        nextButton.classList.add('d-none');
-        prevButton.classList.add('d-none');
-    setTimeout(() => {
-    firebase.database().ref().child('questions').once('value')
-        .then(snap => playTest(snap.val()))
-    }, 500);
-}
+  function getData() {
+    formAnswers.textContent = "LOAD";
+    nextButton.classList.add("d-none");
+    prevButton.classList.add("d-none");
 
-const obj = {};
-
-const inputs = [...formAnswers.elements]
-    .filter(elem => elem.checked)
-
-inputs.forEach((elem, index) => {
-    obj[`${index}_${questions[numberQuestion].question}`] = elem.value;
-})
-    finalAnswers.push(obj)
-    
-   btnOpenModal.addEventListener('click', () => {
-        modalBlock.classList.add('d-block');
-        getData();
-    })
-
-    closeModal.addEventListener('click', () => {
-        modalBlock.classList.remove('d-block');
-    })
-
-const playTest = () => {
-    const finalAnswers = [];
-    let numberQuestion = 0;
-
-    const renderAnswers = (index) => {
-        questions[index].answers.forEach((answer) => {
-            const answerItem = document.createElement('div');
-
-            answerItem.classList.add('answers-item', 'd-flex', 'justify-content-center');
-
-            answerItem.innerHTML = `
-                <input type="${questions[index].type}" id="${answer.title}" name="answer" class="d-none" value="${answer.title}">
-                <label for="${answer.title}" class="d-flex flex-column justify-content-between">
-                    <img class="answerImg" src="${answer.url}" alt="burger">
-                    <span>${answer.title}</span>
-                </label>
-            `;
-
-            formAnswers.appendChild(answerItem);
-        })
-    }
-
-    const renderQuestions = () => {
-        formAnswers.innerHTML = '';
-
-        switch (true) {
-            case numberQuestion < questions.length:
-                questionTitle.textContent = `${questions[numberQuestion].question}`;
-                renderAnswers(numberQuestion);
-                nextButton.classList.remove('d-none');
-                prevButton.classList.remove('d-none');
-                sendButton.classList.add('d-none');
-                break;
-
-            case numberQuestion === 0:
-                prevButton.classList.add('d-none');
-                break;
-
-            case numberQuestion === questions.length - 1:
-                nextButton.classList.add('d-none');
-                prevButton.classList.remove('d-none');
-                sendButton.classList.add('d-none');
-                break;
-
-            case numberQuestion === questions.length:
-                nextButton.classList.add('d-none');
-                prevButton.classList.add('d-none');
-                sendButton.classList.remove('d-none');
-
-                formAnswers.innerHTML = `
-                    <div class="form-group">
-                        <label for="numberPhone">Enter your number</label>
-                        <input type="phone" class="form-control" id="numberPhone">
-                    </div>
-                `;
-                break;
-
-            case numberQuestion === questions.length + 1:
-                formAnswers.textContent = 'Спасибо за пройденный тест!';
-                setTimeout(() => {
-                    modalBlock.classList.remove('d-block');
-                }, 2000);
-                break;
+    get(child(dbRef, "questions"))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          playTest(snapshot.val());
+          nextButton.classList.remove("d-none");
+        } else {
+          formAnswers.textContent = "Ошибка загрузки данных";
         }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    // fetch("/questions.json").then((res) =>
+    //   res
+    //     .json()
+    //     .then((data) => playTest(data.questions))
+    //     .catch((err) => {
+    //       formAnswers.textContent = "Ошибка загрузки данных";
+    //       console.error(err);
+    //     })
+    // );
+  }
+
+  btnOpenModal.addEventListener("click", () => {
+    modalBlock.classList.add("d-block");
+
+    getData();
+  });
+
+  closeModal.addEventListener("click", () => {
+    modalBlock.classList.remove("d-block");
+  });
+
+  const playTest = (questions) => {
+    let numberQuestion = 0;
+    let finalAnswers = [];
+
+    const updateMarkup = () => {
+      switch (numberQuestion) {
+        case 0:
+          prevButton.classList.add("d-none");
+          nextButton.classList.remove("d-none");
+          sendButton.classList.add("d-none");
+          break;
+        case questions.length:
+          prevButton.classList.remove("d-none");
+          nextButton.classList.add("d-none");
+          sendButton.classList.remove("d-none");
+
+          formAnswers.innerHTML = `
+          <div class="form-group">
+            <label for="numberPhone">Enter your number</label>
+            <input type="phone" class="form-control" id="numberPhone">
+          </div>
+          `;
+          break;
+        default:
+          nextButton.classList.remove("d-none");
+          prevButton.classList.remove("d-none");
+          sendButton.classList.add("d-none");
+          break;
+      }
     };
 
-    renderQuestions();
+    const renderAnswers = (index) => {
+      questions[index].answers.forEach((answer) => {
+        const answerItem = document.createElement("div");
+
+        answerItem.classList.add(
+          "answers-item",
+          "d-flex",
+          "justify-content-center"
+        );
+
+        answerItem.innerHTML = `
+              <input type="${questions[index].type}" id="answerItem${questions[
+          index
+        ].answers.indexOf(answer)}" name="answer" class="d-none">
+              <label for="answerItem${questions[index].answers.indexOf(
+                answer
+              )}" class="d-flex flex-column justify-content-between">
+                  <img class="answerImg" src="${answer.url}" alt="burger">
+                  <span>${answer.title}</span>
+              </label>
+          `;
+
+        formAnswers.appendChild(answerItem);
+      });
+    };
+
+    const renderQuestions = (indexQuestion) => {
+      formAnswers.innerHTML = "";
+      updateMarkup();
+
+      console.log(indexQuestion, questions.length - 1);
+      if (indexQuestion < questions.length) {
+        questionTitle.textContent = questions[indexQuestion].question;
+        renderAnswers(indexQuestion);
+      } else if (indexQuestion === questions.length + 1) {
+        questionTitle.textContent = "Thank you for your answers!";
+
+        setTimeout(() => {
+          modalBlock.classList.remove("d-block");
+        }, 2000);
+      }
+    };
+
+    renderQuestions(numberQuestion);
 
     const checkAnswer = () => {
-        const obj = {};
-        const inputs = [...formAnswers.elements].filter((input) => input.checked || input.id === 'numberPhone')
+      const obj = {};
 
-        inputs.forEach((input, index) => {
-            if (numberQuestion >= 0 && numberQuestion <= questions.length - 1) {
-                obj[`${index}_${questions[numberQuestion].question}`] = input.value;
-            }
+      const inputs = [...formAnswers.elements].filter(
+        (input) => input.checked || input.id === "numberPhone"
+      );
 
-            if (numberQuestion === questions.length) {
-                obj['Номер телефона'] = input.value;
-            }
-        })
-        finalAnswers.push(obj);
-    }
+      inputs.forEach((input, index) => {
+        if (numberQuestion >= 0 && numberQuestion <= questions.length - 1) {
+          obj[`${index}_${questions[numberQuestion].question}`] =
+            input.nextElementSibling.textContent.trim();
+        }
+
+        if (numberQuestion === questions.length) {
+          obj["Номер телефона"] = input.value;
+        }
+      });
+
+      finalAnswers.push(obj);
+    };
 
     nextButton.onclick = () => {
-        checkAnswer();
-        numberQuestion++;
-        renderQuestions();
-    }
+      checkAnswer();
+      numberQuestion++;
+      renderQuestions(numberQuestion);
+    };
 
     prevButton.onclick = () => {
-        numberQuestion--;
-        renderQuestions();
-    }
+      checkAnswer();
+      numberQuestion--;
+      renderQuestions(numberQuestion);
+    };
 
     sendButton.onclick = () => {
-        checkAnswer();
-        numberQuestion++;
-        renderQuestions(numberQuestion);
-        firebase
-            .database()
-            .ref()
-            .child('contacts')
-            .push(finalAnswers)
-        
-        console.log(finalAnswers);
-    }
-}
-
-
-})
+      checkAnswer();
+      numberQuestion++;
+      renderQuestions(numberQuestion);
+      push(child(dbRef, "orders"), finalAnswers);
+      console.log(finalAnswers);
+    };
+  };
+});
